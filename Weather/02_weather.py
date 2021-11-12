@@ -33,17 +33,20 @@ def parse_page(html, return_list):
         else:
             hightem = ''
         lowtem = day.find('p', 'tem').find('i').get_text()
+
         win = re.findall('(?<= title=").*?(?=")', str(day.find('p', 'win').find('em')))
         wind = '-'.join(win)
+
         level = day.find('p', 'win').find('i').get_text()
         return_list.append([date, wea, lowtem, hightem, wind, level])
 
 
 def print_res(return_list):
+    # https://zhidao.baidu.com/question/368788419926022804.html
     tplt = '{0:<10}\t{1:^10}\t{2:^10}\t{3:{6}^10}\t{4:{6}^10}\t{5:{6}^5}'
     result_list_wt.append(tplt.format('日期', '天气', '最低温', '最高温', '风向', '风力', chr(12288)) + "\n")
-    for i in return_list:
-        result_list_wt.append(tplt.format(i[0], i[1], i[2], i[3], i[4], i[5], chr(12288)) + "\n")
+    for i in return_list:  # https://blog.csdn.net/Heart_for_Ling/article/details/109247500
+        result_list_wt.append(tplt.format(i[0], i[1], i[2], i[3], i[4], i[5], chr(12288)) + "\n")  # 宽度不够时采用中文空格填充，中文空格的编码为chr(12288)
 
 
 def main():
@@ -63,6 +66,7 @@ def main():
 
             wea_list = []
             parse_page(html, wea_list)  # 解析网页内容，得到数据
+
             print_res(wea_list)
         files.close()
     except:
@@ -71,7 +75,7 @@ def main():
     # 将获取结果写入到文件内
     msgs = ''.join(result_list_wt)
     # print(msgs)
-    with open('weather.China1.txt', "w+") as file:
+    with open('weather.China.txt', "w+") as file:
         file.write(msgs)
 
 

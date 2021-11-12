@@ -26,15 +26,15 @@ def get_soup(url):
 
 
 # 数据存储到csv文件
-# def saveTocsv(data, fileName):
-#     '''
-#     将天气数据保存至csv文件
-#     '''
-#
-#     # 城市  日期	天气状况	风力方向	最高温度	天气状况	风力方向	最低温度，用下面的数字分别代表
-#     result_weather = pd.DataFrame(data, columns=['1', '2', '3', '4', '5', '6', '7', '8'])
-#     result_weather.to_csv(fileName, index=False, encoding='gbk')
-#     print('Save all weather success!')
+def saveTocsv(data, fileName):
+    '''
+    将天气数据保存至csv文件
+    '''
+
+    # 城市  日期	天气状况	风力方向	最高温度	天气状况	风力方向	最低温度，用下面的数字分别代表
+    result_weather = pd.DataFrame(data, columns=['1', '2', '3', '4', '5', '6', '7', '8'])
+    result_weather.to_csv(fileName, index=False, encoding='gbk')
+    print('Save all weather success!')
 
 
 # 数据存储到Mysql
@@ -81,5 +81,5 @@ def get_data():
 
 if __name__ == '__main__':
     data = get_data()
-    # saveTocsv(data, "13.csv")
+    saveTocsv(data, "13.csv")
     saveToMysql(data)

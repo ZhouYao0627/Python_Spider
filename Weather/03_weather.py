@@ -6,7 +6,6 @@ import pymysql
 
 # 打开数据库连接，并使用cursor()建立一个游标对象
 conn = pymysql.connect(host='localhost', user='root', passwd='123456', db='weather2', port=3306, charset='utf8')
-
 cursor = conn.cursor()
 
 
@@ -43,7 +42,8 @@ def get_temperature(url):
 
             print(city_name, weather, wind, max, min)
 
-            sql = "INSERT INTO weather1(city, weather, wind, max, min) VALUES ('%s', '%s', '%s', %s, %s)" % (city_name, weather, wind, max, min)
+            sql = "INSERT INTO weather1(city, weather, wind, max, min) VALUES ('%s', '%s', '%s', %s, %s)" % (
+            city_name, weather, wind, max, min)
             cursor.execute(sql)
 
 
