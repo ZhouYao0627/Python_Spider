@@ -1,4 +1,4 @@
-# 爬取中国所有城市的天气信息
+# 爬取中国所有城市的当天天气信息
 # 导入模块
 from bs4 import BeautifulSoup
 import requests

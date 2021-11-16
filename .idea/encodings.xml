@@ -2,11 +2,11 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/Weather/12.csv" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/Weather/12.csv" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/Weather/13.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/Weather/13.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/Weather/14.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/Weather/weather.China.txt" charset="GBK" />
     <file url="file://$PROJECT_DIR$/Weather/weather.China2.txt" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/Weather2/weather1.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/Weather2/weather14.csv" charset="GBK" />
   </component>
 </project>

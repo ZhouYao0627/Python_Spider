@@ -1,4 +1,4 @@
-# 这是将七天的天气信息给爬取下来
+# 这是将未来七天的天气信息给爬取下来
 import requests
 from bs4 import BeautifulSoup
 import re  # re --- 正则表达式操作
