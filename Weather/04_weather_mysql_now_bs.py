@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import pymysql
 
-conn = pymysql.connect(user='root', password='123456', host='localhost', database='new', port=3306, charset='utf8')
+conn = pymysql.connect(user='root', password='123456', host='localhost', database='zgtq', port=3306, charset='utf8')
 cursor = conn.cursor()
 
 
@@ -63,7 +63,7 @@ def parse_page(html, city_name):
     # sql = "INSERT INTO test1(城市,时间实况, 温度,相对湿度,风向级数,空气质量) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
     #     city_name, time1, tem, zs_h, zs_w, zs_pool)
 
-    sql = "INSERT INTO test2(城市,日期,时间实况, 当前温度,天气概况,风向,风力) VALUES ('%s','%s', '%s', '%s', '%s', '%s', '%s')" % (
+    sql = "INSERT INTO now_now(城市,日期,时间实况, 当前温度,天气概况,风向,风力) VALUES ('%s','%s', '%s', '%s', '%s', '%s', '%s')" % (
         city_name, date, time1, tem, wea, win, leve1)
 
     try:
@@ -75,7 +75,7 @@ def parse_page(html, city_name):
 
 
 def main():
-    files = open('city_list_pre7.txt', 'r', encoding='utf-8')
+    files = open('city_list_all.txt', 'r', encoding='utf-8')
     city_name_id = files.readlines()
 
     try:

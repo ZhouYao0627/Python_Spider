@@ -16,7 +16,7 @@ web = Chrome(options=opt)  # 把参数设置到浏览器
 # http://forecast.weather.com.cn/town/weather1dn/101190101064.shtml  板桥新城
 # http://forecast.weather.com.cn/town/weather1dn/101190107005.shtml  盘城
 
-conn = pymysql.connect(user='root', password='123456', host='localhost', database='new', port=3306, charset='utf8')
+conn = pymysql.connect(user='root', password='123456', host='localhost', database='zgtq', port=3306, charset='utf8')
 cursor = conn.cursor()
 
 
@@ -36,7 +36,7 @@ def parse_page1(html, city_name):
     tree = etree.HTML(html)
 
     time = tree.xpath("//*[@id='today']/div[1]/div/p[1]/span/text()")[0]
-    tem = tree.xpath("//*[@id='today']/div[1]/div/div[3]/span/text()")[0] + '℃'
+    tem = tree.xpath("//*[@id='today']/div[1]/div/div[3]/span/text()")[0] + '℃'  # 当前温度
     zs_h1 = tree.xpath("//*[@id='today']/div[1]/div/div[1]/span/text()")[0]
     zs_h2 = tree.xpath("//*[@id='today']/div[1]/div/div[1]/em/text()")[0]
     zs_h = zs_h1 + zs_h2
@@ -47,7 +47,28 @@ def parse_page1(html, city_name):
 
     zs_pol = tree.xpath("//*[@id='today']/div[1]/div/div[5]/span/a/text()")[0]
 
-    sql = "INSERT INTO test1(城市,时间实况, 温度,相对湿度,风向级数,空气质量) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
+    sql = "INSERT INTO four_place(城市,时间实况, 温度,相对湿度,风向级数,空气质量) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
+        city_name, time, tem, zs_h, zs_w, zs_pol)
+
+    try:
+        cursor.execute(sql)
+        conn.commit()
+    except Exception as e:
+        print(e)
+        conn.rollback()
+
+def parse_page2(html, city_name):
+    tree = etree.HTML(html)
+
+    time = tree.xpath("/html/body/div[4]/div[3]/div[2]/div[1]/div/span/text()")[0]
+    tem = tree.xpath("/html/body/div[4]/div[3]/div[2]/div[3]/span[1]/text()")[0] + '℃'
+    zs_h = tree.xpath("/html/body/div[4]/div[3]/div[2]/p[2]/span/text()")[0]
+
+    zs_w = tree.xpath("/html/body/div[4]/div[3]/div[2]/p[1]/span/text()")[0]
+
+    zs_pol = ''
+
+    sql = "INSERT INTO four_place(城市,时间实况, 温度,相对湿度,风向级数,空气质量) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
         city_name, time, tem, zs_h, zs_w, zs_pol)
 
     try:
@@ -74,6 +95,7 @@ def main():
                 parse_page1(html, city_name)
             else:
                 url = 'http://forecast.weather.com.cn/town/weather1dn/' + city_id + '.shtml'
+                web.get(url)
                 html = get_page(url)
                 parse_page2(html, city_name)
 

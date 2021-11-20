@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import pymysql
 
 # 打开数据库连接，并使用cursor()建立一个游标对象
-conn = pymysql.connect(host='localhost', user='root', passwd='123456', db='predict_7', port=3306, charset='utf8')
+conn = pymysql.connect(host='localhost', user='root', passwd='123456', db='zgtq', port=3306, charset='utf8')
 cursor = conn.cursor()
 
 
@@ -37,7 +37,7 @@ def parse_page(html,city_name):
         wind = day.find('p', 'win').find('em').find('span').attrs['title']
         level = day.find('p', 'win').find('i').get_text()
 
-        sql = "INSERT INTO test2(城市,日期,天气,最高温度,最低温度,风向,风速等级) VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
+        sql = "INSERT INTO future7(城市,日期,天气,最高温度,最低温度,风向,风速等级) VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
             city_name, date, wea, hightem, lowtem, wind, level)
 
         try:
@@ -49,7 +49,7 @@ def parse_page(html,city_name):
 
 
 def main():
-    files = open('city_list_pre7.txt', 'r', encoding='utf-8')
+    files = open('city_list_all.txt', 'r', encoding='utf-8')
     city_name_id = files.readlines()
 
     try:
