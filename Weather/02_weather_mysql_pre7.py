@@ -22,7 +22,7 @@ def get_page(url):
         return 'error'
 
 
-def parse_page(html,city_name):
+def parse_page(html, city_name, city_jw):
     soup = BeautifulSoup(html, 'lxml')
     day_list = soup.find('ul', 't clearfix').find_all('li')
     for day in day_list:
@@ -37,8 +37,8 @@ def parse_page(html,city_name):
         wind = day.find('p', 'win').find('em').find('span').attrs['title']
         level = day.find('p', 'win').find('i').get_text()
 
-        sql = "INSERT INTO future7(城市,日期,天气,最高温度,最低温度,风向,风速等级) VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
-            city_name, date, wea, hightem, lowtem, wind, level)
+        sql = "INSERT INTO future7(城市,城市坐标,日期,天气,最高温度,最低温度,风向,风速等级) VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
+            city_name, city_jw, date, wea, hightem, lowtem, wind, level)
 
         try:
             cursor.execute(sql)
@@ -49,13 +49,16 @@ def parse_page(html,city_name):
 
 
 def main():
-    files = open('city_list_all.txt', 'r', encoding='utf-8')
-    city_name_id = files.readlines()
+    files = open('city_list_dijishi.txt', 'r', encoding='utf-8')
+    city_all = files.readlines()
 
     try:
-        for line in city_name_id:
-            city_name = line.split('-')[0].replace("\n", "")
-            city_id = line.split('-')[1].replace("\n", "")
+        for line in city_all:
+            city_name_id = line.split('=')[0].replace("\n", "")
+            city_jw = line.split('=')[1].replace("\n", "")
+            city_name = city_name_id.split('-')[0].replace("\n", "")
+            city_id = city_name_id.split('-')[1].replace("\n", "")
+
             url = 'http://www.weather.com.cn/weather/' + city_id + '.shtml'
 
             # sql = "INSERT INTO test1(城市,日期,天气,最高温度,最低温度,风向,风速等级) VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
@@ -72,8 +75,8 @@ def main():
 
             # print(html)  # 输出用以检查全部内容
 
-            parse_page(html,city_name)  # 解析
-
+            parse_page(html, city_name, city_jw)  # 解析
+            print(city_name)
         files.close()
     except:
         print("error")

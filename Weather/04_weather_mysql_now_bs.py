@@ -20,7 +20,7 @@ def get_page(url):
         return 'error'
 
 
-def parse_page(html, city_name):
+def parse_page(html, city_name, city_jw):
     soup = BeautifulSoup(html, 'lxml')
     """
     时间实况 -> time
@@ -63,8 +63,8 @@ def parse_page(html, city_name):
     # sql = "INSERT INTO test1(城市,时间实况, 温度,相对湿度,风向级数,空气质量) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
     #     city_name, time1, tem, zs_h, zs_w, zs_pool)
 
-    sql = "INSERT INTO now_now(城市,日期,时间实况, 当前温度,天气概况,风向,风力) VALUES ('%s','%s', '%s', '%s', '%s', '%s', '%s')" % (
-        city_name, date, time1, tem, wea, win, leve1)
+    sql = "INSERT INTO now_now(城市,城市坐标,日期,时间实况, 当前温度,天气概况,风向,风力) VALUES ('%s','%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (
+        city_name, city_jw, date, time1, tem, wea, win, leve1)
 
     try:
         cursor.execute(sql)
@@ -75,13 +75,15 @@ def parse_page(html, city_name):
 
 
 def main():
-    files = open('city_list_all.txt', 'r', encoding='utf-8')
-    city_name_id = files.readlines()
+    files = open('city_list_dijishi.txt', 'r', encoding='utf-8')
+    city_all = files.readlines()
 
     try:
-        for line in city_name_id:
-            city_name = line.split('-')[0].replace("\n", "")
-            city_id = line.split('-')[1].replace("\n", "")
+        for line in city_all:
+            city_name_id = line.split('=')[0].replace("\n", "")
+            city_jw = line.split('=')[1].replace("\n", "")
+            city_name = city_name_id.split('-')[0].replace("\n", "")
+            city_id = city_name_id.split('-')[1].replace("\n", "")
 
             url = 'http://www.weather.com.cn/weather/' + city_id + '.shtml'
 
@@ -89,7 +91,9 @@ def main():
 
             # print(html)  # 输出用以检查全部内容
 
-            parse_page(html, city_name)
+            parse_page(html, city_name, city_jw)
+
+            print(city_name)
         files.close()
     except:
         print("error")
