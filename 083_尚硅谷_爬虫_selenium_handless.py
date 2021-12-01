@@ -26,7 +26,7 @@ def share_browser():
     chrome_options.add_argument('--disable-gpu')
 
     # path是你自己的chrome浏览器的文件路径
-    path = r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
+    path = r'C:\Users\Administrator\AppData\Local\Google\Chrome\Application\chrome.exe'
     chrome_options.binary_location = path
 
     browser = webdriver.Chrome(chrome_options=chrome_options)
@@ -35,5 +35,5 @@ def share_browser():
 
 browser = share_browser()
 
-url = 'https://www.baidu.com'
-browser.get(url)
+url = 'http://www.weather.com.cn/weather1d/101010100.shtml'
+print(browser.get(url))

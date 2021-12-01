@@ -1,7 +1,15 @@
-import time
 import requests
-from bs4 import BeautifulSoup
+from lxml import etree
+from selenium.webdriver import Chrome
+from selenium.webdriver.chrome.options import Options  # 不显示页面
 import pymysql
+
+# 不显示浏览器使用的过程
+opt = Options()
+opt.add_argument('--headless')
+opt.add_argument('--disable-gpu')
+# -------------------------------------
+web = Chrome(options=opt)  # 把参数设置到浏览器
 
 conn = pymysql.connect(user='root', password='123456', host='localhost', database='zgtq', port=3306, charset='utf8')
 cursor = conn.cursor()
@@ -20,45 +28,228 @@ def get_page(url):
         return 'error'
 
 
-def parse_page(html, city_name, city_jw):
-    soup = BeautifulSoup(html, 'lxml')
+def time_all(tree):
+    # 08-13时
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[5]/li[1]/text() # 08  --->
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[5]/li[2]/text() # 09
+    #                  ......
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[5]/li[4]/text() # 11  --->
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[5]/li[6]/text() # 13
 
-    data = soup.find(class_="curve_livezs")
-    time1 = data.find(class_="time")
-    tem = data.find(class_="tem").find_all("em")
-    winf = data.find(class_="winf").find_all("em")
-    winl = data.find(class_="winl").find_all("em")
+    # 02时-07时
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[5]/li[1]/text() # 02  --->
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[5]/li[2]/text() # 03
+    #                  ......
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[5]/li[4]/text() # 05  --->
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[5]/li[6]/text() # 07
 
-    sql = "INSERT INTO period(城市,坐标, 段时间,段温度,段风向,段风向级数) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
-        city_name, city_jw, time1, tem, winf, winl)
+    # 20时-01时
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[5]/li[1]/text() # 20  --->
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[5]/li[2]/text() # 21
+    #                  ......
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[5]/li[4]/text() # 23  --->
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[5]/li[6]/text() # 01
 
-    try:
-        cursor.execute(sql)
-        conn.commit()
-    except Exception as e:
-        print(e)
-        conn.rollback()
+    # 14时-19时
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[5]/li[1]/text() # 14  --->
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[5]/li[2]/text() # 15
+    #                  ......
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[5]/li[4]/text() # 17  --->
+    #                  /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[5]/li[6]/text() # 19
+
+    dir = []
+
+    # 14时-19时
+    # time = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[5]/li[1]/text()")
+    # time = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[5]/li[" + (i + 1) + "]/text()")
+    # dir.append(time)
+    time_14 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[5]/li[1]/text()")
+    time_17 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[5]/li[4]/text()")
+    time_20 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[5]/li[1]/text()")
+    time_23 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[5]/li[4]/text()")
+    time_02 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[5]/li[1]/text()")
+    time_05 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[5]/li[4]/text()")
+    time_08 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[5]/li[1]/text()")
+    time_11 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[5]/li[4]/text()")
+    dir.append(time_14)
+    dir.append(time_17)
+    dir.append(time_20)
+    dir.append(time_23)
+    dir.append(time_02)
+    dir.append(time_05)
+    dir.append(time_08)
+    dir.append(time_11)
+
+    return dir
+
+
+def wea_all(tree):
+    dir = []
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[2]/li[1]
+    wea_14 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[2]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[2]/li[4]
+    wea_17 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[2]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[2]/li[1]
+    wea_20 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[2]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[2]/li[4]
+    wea_23 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[2]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[2]/li[1]
+    wea_02 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[2]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[2]/li[4]
+    wea_05 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[2]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[2]/li[1]
+    wea_08 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[2]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[2]/li[4]
+    wea_11 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[2]/li[4]/text()")
+    dir.append(wea_14)
+    dir.append(wea_17)
+    dir.append(wea_20)
+    dir.append(wea_23)
+    dir.append(wea_02)
+    dir.append(wea_05)
+    dir.append(wea_08)
+    dir.append(wea_11)
+
+    return dir
+
+
+def tem_all(tree):
+    dir = []
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/div/ul/li[1]/span
+    tem_14 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/div/ul/li[1]/span/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/div/ul/li[4]/span
+    tem_17 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/div/ul/li[4]/span/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/div/ul/li[1]/span
+    tem_20 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/div/ul/li[1]/span/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/div/ul/li[4]/span
+    tem_23 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/div/ul/li[4]/span/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/div/ul/li[1]/span
+    tem_02 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/div/ul/li[1]/span/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/div/ul/li[4]/span
+    tem_05 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/div/ul/li[4]/span/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/div/ul/li[1]/span
+    tem_08 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/div/ul/li[1]/span/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/div/ul/li[4]/span
+    tem_11 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/div/ul/li[4]/span/text()")
+
+    dir.append(tem_14)
+    dir.append(tem_17)
+    dir.append(tem_20)
+    dir.append(tem_23)
+    dir.append(tem_02)
+    dir.append(tem_05)
+    dir.append(tem_08)
+    dir.append(tem_11)
+
+    return dir
+
+
+def winf_all(tree):
+    dir = []
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[3]/li[1]
+    winf_14 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[3]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[3]/li[4]
+    winf_17 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[3]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[3]/li[1]
+    winf_20 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[3]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[3]/li[4]
+    winf_23 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[3]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[3]/li[1]
+    winf_02 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[3]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[3]/li[4]
+    winf_05 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[3]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[3]/li[1]
+    winf_08 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[3]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[3]/li[4]
+    winf_11 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[3]/li[4]/text()")
+
+    dir.append(winf_14)
+    dir.append(winf_17)
+    dir.append(winf_20)
+    dir.append(winf_23)
+    dir.append(winf_02)
+    dir.append(winf_05)
+    dir.append(winf_08)
+    dir.append(winf_11)
+
+    return dir
+
+
+def winl_all(tree):
+    dir = []
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[4]/li[1]
+    winl_14 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[4]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[4]/li[4]
+    winl_17 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[1]/ul[4]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[4]/li[1]
+    winl_20 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[4]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[4]/li[4]
+    winl_23 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[2]/ul[4]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[4]/li[1]
+    winl_02 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[4]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[4]/li[4]
+    winl_05 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[3]/ul[4]/li[4]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[4]/li[1]
+    winl_08 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[4]/li[1]/text()")
+    # /html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[4]/li[4]
+    winl_11 = tree.xpath("/html/body/div[5]/div/div[2]/div[2]/div[1]/div/div[4]/ul[4]/li[4]/text()")
+
+    dir.append(winl_14)
+    dir.append(winl_17)
+    dir.append(winl_20)
+    dir.append(winl_23)
+    dir.append(winl_02)
+    dir.append(winl_05)
+    dir.append(winl_08)
+    dir.append(winl_11)
+
+    return dir
+
+
+def parse_page(html, city_name):
+    tree = etree.HTML(html)
+
+    time_list = time_all(tree)
+    wea_list = wea_all(tree)
+    tem_list = tem_all(tree)
+    winf_list = winf_all(tree)
+    winl_list = winl_all(tree)
+
+    print(city_name)
+
+    for i in range(8):
+        time = time_list[i][0]
+        wea = wea_list[i][0]
+        tem = tem_list[i][0]
+        winf = winf_list[i][0]
+        winl = winl_list[i][0]
+
+        sql = "INSERT INTO period(城市,时间, 天气,温度,风向,风向级数) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
+            city_name, time, wea, tem, winf, winl)
+
+        try:
+            cursor.execute(sql)
+            conn.commit()
+        except Exception as e:
+            print(e)
+            conn.rollback()
 
 
 def main():
-    files = open('city_list_dijishi.txt', 'r', encoding='utf-8')
-    city_all = files.readlines()
+    files = open('city_list_new_url.txt', 'r', encoding='utf-8')
+    city_name_id = files.readlines()
 
     try:
-        for line in city_all:
-            city_name_id = line.split('=')[0].replace("\n", "")
-            city_jw = line.split('=')[1].replace("\n", "")
-            city_name = city_name_id.split('-')[0].replace("\n", "")
-            city_id = city_name_id.split('-')[1].replace("\n", "")
+        for line in city_name_id:
+            city_name = line.split('-')[0].replace("\n", "")
+            city_id = line.split('-')[1].replace("\n", "")
 
-            url = 'http://www.weather.com.cn/weather/' + city_id + '.shtml'
+            url = 'https://www.tianqi.com/beijing/'
+            # url = 'https://www.tianqi.com/' + city_id + '/'
+            web.get(url)
+            html = web.page_source  # 得到页面element的html代码
+            parse_page(html, city_name)
 
-            html = get_page(url)
-
-            # print(html)  # 输出用以检查全部内容
-
-            parse_page(html, city_name, city_jw)
-            print(city_name)
         files.close()
     except:
         print("error")
@@ -68,10 +259,10 @@ if __name__ == '__main__':
     main()
     print('success')
 
+# import time
 # import requests
 # from bs4 import BeautifulSoup
 # import pymysql
-# from lxml import etree
 #
 # conn = pymysql.connect(user='root', password='123456', host='localhost', database='zgtq', port=3306, charset='utf8')
 # cursor = conn.cursor()
@@ -90,48 +281,18 @@ if __name__ == '__main__':
 #         return 'error'
 #
 #
-# def parse_page(html, city_name, city_jw):
-#     # soup = BeautifulSoup(html, 'lxml')
-#     """
-#     时间实况 -> time
-#     温度 -> tem
-#     相对湿度 -> zs h
-#     风向级数 -> zs w
-#     空气质量 -> zs pool
-#     """
-#     # time = soup.find('div', class_='sk mySkyNull').find('p', class_='time').find('span').get_text()
-#     #
-#     # tem1 = soup.find('div', 'sk mySkyNull').find('div', 'tem').find('span').get_text()
-#     # tem2 = soup.find('div', 'sk mySkyNull').find('div', 'tem').find('em').get_text()
-#     # tem = tem1 + tem2
-#     #
-#     # zs_h1 = soup.find('div', 'sk mySkyNull').find('div', 'zs h').find('span').get_text()
-#     # zs_h2 = soup.find('div', 'sk mySkyNull').find('div', 'zs h').find('em').get_text()
-#     # zs_h = zs_h1 + zs_h2
-#     #
-#     # zs_w1 = soup.find('div', 'sk mySkyNull').find('div', 'zs w').find('span').get_text()
-#     # zs_w2 = soup.find('div', 'sk mySkyNull').find('p', 'zs w').find('em').get_text()
-#     # zs_w = zs_w1 + zs_w2
-#     #
-#     # zs_pool = soup.find('div', 'sk mySkyNull').find('div', 'zs pool').find('span').find('a').get_text()
+# def parse_page(html, city_name):
+#     soup = BeautifulSoup(html, 'lxml')
 #
-#     # 解析服务器响应的文件
+#     data = soup.find(class_="day7")
+#     wea = data.find(class_="txt txt2").find_all("li")
+#     time1 = data.find(class_="txt canvas_hour").find(class_="w95")
+#     tem = data.find(class_="zxt_shuju1").find_all("ul")
+#     winf = data.find(class_="txt").find_all(class_="w95")
+#     winl = data.find(class_="txt").find_all(class_="w95 mgtop5")
 #
-#     # //*[@id='curve']/div[1]/em  ---> class="time"
-#     # //*[@id='curve']/div[4]/em  ---> class="tem"
-#     # //*[@id='curve']/div[5]/em  ---> class="winf"
-#     # //*[@id='curve']/div[6]/em  ---> class="winl"
-#
-#     tree = etree.HTML(html)
-#
-#     # 获取想要的数据  xpath的返回值是一个列表类型的数据
-#     time = tree.xpath("//*[@id='curve']/div[1]/em/text()")
-#     tem = tree.xpath("//*[@id='curve']/div[4]/em/text()")
-#     winf = tree.xpath("//*[@id='curve']/div[5]/em/text()")
-#     winl = tree.xpath("//*[@id='curve']/div[6]/em/text()")
-#
-#     sql = "INSERT INTO period(城市,坐标, 段时间,段温度,段风向,段风向级数) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
-#         city_name, city_jw, time, tem, winf, winl)
+#     sql = "INSERT INTO period(城市,时间, 天气,温度,风向,风向级数) VALUES ('%s','%s', '%s', '%s', '%s', '%s')" % (
+#         city_name, time1, wea,tem, winf, winl)
 #
 #     try:
 #         cursor.execute(sql)
@@ -142,21 +303,22 @@ if __name__ == '__main__':
 #
 #
 # def main():
-#     files = open('city_list_dijishi.txt', 'r', encoding='utf-8')
-#     city_all = files.readlines()
+#     files = open('city_list_new_url.txt', 'r', encoding='utf-8')
+#     city_name_id = files.readlines()
 #
 #     try:
-#         for line in city_all:
-#             city_name_id = line.split('=')[0].replace("\n", "")
-#             city_jw = line.split('=')[1].replace("\n", "")
-#             city_name = city_name_id.split('-')[0].replace("\n", "")
-#             city_id = city_name_id.split('-')[1].replace("\n", "")
+#         for line in city_name_id:
+#             city_name = line.split('-')[0].replace("\n", "")
+#             city_id = line.split('-')[1].replace("\n", "")
 #
-#             url = 'http://www.weather.com.cn/weather1d/' + city_id + '.shtml'
+#             # https://www.tianqi.com/beijing/
+#             url = 'https://www.tianqi.com/' + city_id + '/'
 #
 #             html = get_page(url)
-#             # print(html)
-#             parse_page(html, city_name, city_jw)
+#
+#             # print(html)  # 输出用以检查全部内容
+#
+#             parse_page(html, city_name)
 #         files.close()
 #     except:
 #         print("error")
@@ -165,3 +327,4 @@ if __name__ == '__main__':
 # if __name__ == '__main__':
 #     main()
 #     print('success')
+#
